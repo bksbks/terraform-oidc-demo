@@ -33,7 +33,7 @@ jobs:
 
       - name: Select Environment
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
             echo "ENV=dev" >> $GITHUB_ENV
           else
             echo "ENV=prod" >> $GITHUB_ENV
