@@ -25,7 +25,7 @@ jobs:
         id: env
         run: |
           if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "environment=qa" >> $GITHUB_OUTPUT
           else
             echo "environment=dev" >> $GITHUB_OUTPUT
           fi
