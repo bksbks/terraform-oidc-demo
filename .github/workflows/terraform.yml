@@ -11,8 +11,50 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
+  plan:
     runs-on: ubuntu-latest
+
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Environment
+        id: env
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure AWS Credentials Using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::645387694777:role/terraform-oidc-iam-role
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=env/${{ steps.env.outputs.environment }}.tfvars
+
+  apply:
+    needs: plan
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ needs.plan.outputs.environment }}
 
     steps:
       - name: Checkout Code
@@ -27,22 +69,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Select Environment
-        run: |
-          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            echo "ENV=dev" >> $GITHUB_ENV
-          else
-            echo "ENV=prod" >> $GITHUB_ENV
-          fi
-
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        run: terraform plan -var-file=env/${ENV}.tfvars
-
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var-file=env/${ENV}.tfvars
+        run: terraform apply -auto-approve -var-file=env/${{ needs.plan.outputs.environment }}.tfvars
