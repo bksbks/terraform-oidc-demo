@@ -15,6 +15,7 @@ public_subnets = {
   }
 }
 
+
 private_subnets = {
   private_1 = {
     cidr_block        = "11.0.11.0/24"
